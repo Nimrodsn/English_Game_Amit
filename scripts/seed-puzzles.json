@@ -1,0 +1,107 @@
+[
+  {
+    "word": "apple",
+    "translation": "תפוח",
+    "options": ["apple", "banana", "car", "house"],
+    "category": "food",
+    "image_url": ""
+  },
+  {
+    "word": "banana",
+    "translation": "בננה",
+    "options": ["grape", "banana", "bread", "milk"],
+    "category": "food",
+    "image_url": ""
+  },
+  {
+    "word": "dog",
+    "translation": "כלב",
+    "options": ["cat", "dog", "fish", "bird"],
+    "category": "animals",
+    "image_url": ""
+  },
+  {
+    "word": "cat",
+    "translation": "חתול",
+    "options": ["cat", "cow", "duck", "frog"],
+    "category": "animals",
+    "image_url": ""
+  },
+  {
+    "word": "book",
+    "translation": "ספר",
+    "options": ["pen", "book", "desk", "chair"],
+    "category": "school",
+    "image_url": ""
+  },
+  {
+    "word": "pencil",
+    "translation": "עפרון",
+    "options": ["pencil", "ruler", "bag", "clock"],
+    "category": "school",
+    "image_url": ""
+  },
+  {
+    "word": "sun",
+    "translation": "שמש",
+    "options": ["moon", "star", "sun", "cloud"],
+    "category": "nature",
+    "image_url": ""
+  },
+  {
+    "word": "tree",
+    "translation": "עץ",
+    "options": ["tree", "flower", "rock", "river"],
+    "category": "nature",
+    "image_url": ""
+  },
+  {
+    "word": "ball",
+    "translation": "כדור",
+    "options": ["ball", "bat", "goal", "run"],
+    "category": "sports",
+    "image_url": ""
+  },
+  {
+    "word": "car",
+    "translation": "מכונית",
+    "options": ["bus", "car", "bike", "train"],
+    "category": "transport",
+    "image_url": ""
+  },
+  {
+    "word": "house",
+    "translation": "בית",
+    "options": ["house", "school", "park", "shop"],
+    "category": "places",
+    "image_url": ""
+  },
+  {
+    "word": "water",
+    "translation": "מים",
+    "options": ["juice", "water", "cake", "egg"],
+    "category": "food",
+    "image_url": ""
+  },
+  {
+    "word": "bird",
+    "translation": "ציפור",
+    "options": ["bird", "lion", "bear", "horse"],
+    "category": "animals",
+    "image_url": ""
+  },
+  {
+    "word": "fish",
+    "translation": "דג",
+    "options": ["fish", "snake", "mouse", "rabbit"],
+    "category": "animals",
+    "image_url": ""
+  },
+  {
+    "word": "happy",
+    "translation": "שמח",
+    "options": ["sad", "happy", "angry", "tired"],
+    "category": "feelings",
+    "image_url": ""
+  }
+]

@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --color-lime-pastel: #c5f36a;
+  --color-peach-pastel: #ffd4b8;
+  --color-purple-pastel: #d4b8ff;
+  --color-lime-dark: #8bc34a;
+  --color-purple-dark: #9c6bff;
+  --font-display: "Nunito", system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-display);
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply min-h-dvh overflow-x-hidden bg-gradient-to-b from-lime-pastel/40 via-peach-pastel/30 to-purple-pastel/40 text-slate-800;
+  }
+
+  #root {
+    @apply min-h-dvh overflow-x-hidden;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+@keyframes pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-40px); opacity: 0; }
+}
+
+.animate-shake {
+  animation: shake 0.45s ease-in-out;
+}
+
+.animate-pop {
+  animation: pop 0.35s ease-out;
+}
+
+.animate-float-up {
+  animation: floatUp 0.9s ease-out forwards;
+}
