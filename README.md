@@ -147,9 +147,12 @@ If OpenAI fails or is unset, the app tries Pexels/Unsplash, then placeholders.
 
 ## Game rules
 
-- Look at the picture and pick the correct English word (4 choices).
-- **+10 points** for each correct answer (saved to `profiles.total_points`).
-- Progress is tracked in `user_progress`.
+- **6 levels** — Animals, Food, School, Nature, Transport, and Super Explorer (mixed).
+- Each round has **8 words** with pictures (OpenAI DALL·E when `OPENAI_API_KEY` is set).
+- **+10 points** per correct answer; **+25 bonus** when you finish a level (60%+ correct).
+- Unlock harder levels with total points (40 / 80 / 120 / 200).
+- **OpenAI words:** if a level has few puzzles in Appwrite, the app auto-generates more via `/api/generate-puzzles`.
+- Built-in **42-word bank** in `src/data/puzzleBank.js` for offline/demo play.
 - Leaderboard shows the top 10 explorers by points.
 
 ## Project structure

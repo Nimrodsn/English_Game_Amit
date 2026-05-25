@@ -4,27 +4,22 @@ import {
   APPWRITE_DB,
   COLLECTIONS,
   ID,
-  Query,
-  isAppwriteConfigured,
   progressPermissions,
 } from '../lib/appwrite';
 import { useAuth } from '../context/AuthContext';
-import { DEMO_PUZZLES } from '../data/demoPuzzles';
-
-function shuffle(array) {
-  const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
+import { getLevelById, LEVEL_BONUS_POINTS, PUZZLES_PER_ROUND } from '../data/levels';
+import { loadLevelPuzzles } from '../services/puzzleService';
+import { preloadImage } from '../services/imageService';
+import { useLevelProgress } from './useLevelProgress';
 
 const POINTS_PER_CORRECT = 10;
 const FEEDBACK_DELAY_MS = 1200;
 
-export function useGameEngine() {
+export function useGameEngine(levelId) {
+  const level = getLevelById(levelId);
   const { user, profile, updatePoints, demoMode } = useAuth();
+  const { markLevelComplete } = useLevelProgress(profile?.total_points ?? 0);
+
   const [puzzles, setPuzzles] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedback, setFeedback] = useState(null);
@@ -33,51 +28,38 @@ export function useGameEngine() {
   const [error, setError] = useState(null);
   const [showPointsPop, setShowPointsPop] = useState(false);
   const [sessionCorrect, setSessionCorrect] = useState(0);
+  const [bonusAwarded, setBonusAwarded] = useState(false);
 
-  const loadPuzzles = useCallback(async () => {
+  const loadRound = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setCurrentIndex(0);
+    setFeedback(null);
+    setSelectedWord(null);
+    setSessionCorrect(0);
+    setBonusAwarded(false);
+
     try {
-      if (demoMode || !isAppwriteConfigured()) {
-        setPuzzles(shuffle(DEMO_PUZZLES));
-        return;
-      }
-
-      const all = [];
-      let offset = 0;
-      const limit = 100;
-      let hasMore = true;
-
-      while (hasMore) {
-        const res = await databases.listDocuments(APPWRITE_DB, COLLECTIONS.puzzles, [
-          Query.limit(limit),
-          Query.offset(offset),
-        ]);
-        all.push(...res.documents);
-        hasMore = res.documents.length === limit;
-        offset += limit;
-      }
-
-      if (all.length === 0) {
-        setPuzzles(shuffle(DEMO_PUZZLES));
-      } else {
-        setPuzzles(shuffle(all));
-      }
+      const round = await loadLevelPuzzles(level, { demoMode, useAI: true });
+      setPuzzles(round);
+      if (round[0]) preloadImage(round[0].word, round[0].image_url, round[0].category);
+      if (round[1]) preloadImage(round[1].word, round[1].image_url, round[1].category);
     } catch (err) {
       setError(err.message || 'Could not load puzzles');
-      setPuzzles(shuffle(DEMO_PUZZLES));
     } finally {
       setLoading(false);
     }
-  }, [demoMode]);
+  }, [level, demoMode]);
 
   useEffect(() => {
-    loadPuzzles();
-  }, [loadPuzzles]);
+    loadRound();
+  }, [loadRound]);
 
   const currentPuzzle = puzzles[currentIndex] ?? null;
   const totalPuzzles = puzzles.length;
-  const progressPercent = totalPuzzles ? ((currentIndex + (feedback ? 1 : 0)) / totalPuzzles) * 100 : 0;
+  const progressPercent = totalPuzzles
+    ? ((currentIndex + (feedback ? 1 : 0)) / totalPuzzles) * 100
+    : 0;
   const isComplete = totalPuzzles > 0 && currentIndex >= totalPuzzles;
 
   const recordProgress = async (puzzle, isCorrect) => {
@@ -95,6 +77,20 @@ export function useGameEngine() {
       progressPermissions(user.$id),
     );
   };
+
+  const awardLevelBonus = useCallback(async () => {
+    if (bonusAwarded) return;
+    setBonusAwarded(true);
+    markLevelComplete(level.id);
+    const newTotal = (profile?.total_points ?? 0) + LEVEL_BONUS_POINTS;
+    await updatePoints(newTotal);
+  }, [bonusAwarded, level.id, markLevelComplete, profile, updatePoints]);
+
+  useEffect(() => {
+    if (isComplete && sessionCorrect >= Math.ceil(totalPuzzles * 0.6)) {
+      awardLevelBonus();
+    }
+  }, [isComplete, sessionCorrect, totalPuzzles, awardLevelBonus]);
 
   const submitAnswer = useCallback(
     async (word) => {
@@ -121,21 +117,17 @@ export function useGameEngine() {
         setShowPointsPop(false);
         setFeedback(null);
         setSelectedWord(null);
-        setCurrentIndex((i) => i + 1);
+        const nextIndex = currentIndex + 1;
+        setCurrentIndex(nextIndex);
+        const nextPuzzle = puzzles[nextIndex + 1];
+        if (nextPuzzle) preloadImage(nextPuzzle.word, nextPuzzle.image_url, nextPuzzle.category);
       }, FEEDBACK_DELAY_MS);
     },
-    [currentPuzzle, feedback, profile, updatePoints, user, demoMode],
+    [currentPuzzle, feedback, profile, updatePoints, user, demoMode, currentIndex, puzzles],
   );
 
-  const restartSession = () => {
-    setCurrentIndex(0);
-    setFeedback(null);
-    setSelectedWord(null);
-    setSessionCorrect(0);
-    setPuzzles((p) => shuffle(p));
-  };
-
   return {
+    level,
     puzzles,
     currentPuzzle,
     currentIndex,
@@ -148,8 +140,10 @@ export function useGameEngine() {
     isComplete,
     sessionCorrect,
     showPointsPop,
+    bonusAwarded,
+    levelBonus: LEVEL_BONUS_POINTS,
     submitAnswer,
-    restartSession,
-    loadPuzzles,
+    restartSession: loadRound,
+    loadRound,
   };
 }

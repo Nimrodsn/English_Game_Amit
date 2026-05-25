@@ -37,7 +37,7 @@ export default function Layout({ children, showNav = true }) {
       {showNav && (
         <nav className="fixed bottom-0 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 items-center justify-around gap-1 rounded-t-3xl border-t border-white/50 bg-white/90 px-2 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur">
           {navItems.map(({ to, icon: Icon, label }) => {
-            const active = pathname === to;
+            const active = pathname === to || (to === '/' && pathname.startsWith('/game'));
             return (
               <Link
                 key={to}

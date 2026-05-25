@@ -6,9 +6,11 @@ function genericPlaceholder() {
   return 'https://placehold.co/600x400/e9d5ff/c084fc?text=🖼️';
 }
 
-async function fetchOpenAI(word) {
+async function fetchOpenAI(word, category = '') {
   try {
-    const res = await fetch(`/api/generate-image?word=${encodeURIComponent(word)}`);
+    const params = new URLSearchParams({ word });
+    if (category) params.set('category', category);
+    const res = await fetch(`/api/generate-image?${params}`);
     if (!res.ok) return null;
     const data = await res.json();
     return data.url || null;
@@ -73,8 +75,8 @@ function pollinationsUrl(word) {
 
 const cache = new Map();
 
-async function resolveImage(word) {
-  const openai = await fetchOpenAI(word);
+async function resolveImage(word, category = '') {
+  const openai = await fetchOpenAI(word, category);
   if (openai) return openai;
 
   const pexels = await fetchPexels(word);
@@ -89,13 +91,19 @@ async function resolveImage(word) {
   return pollinationsUrl(word);
 }
 
-export async function getImageForWord(word, cachedUrl = '') {
+/** Warm the cache for the next card (OpenAI / Pexels / fallbacks). */
+export function preloadImage(word, cachedUrl = '', category = '') {
+  if (!word) return;
+  getImageForWord(word, cachedUrl, category).catch(() => {});
+}
+
+export async function getImageForWord(word, cachedUrl = '', category = '') {
   if (cachedUrl?.trim()) return cachedUrl;
 
-  const key = word.toLowerCase();
+  const key = `${word.toLowerCase()}-${category}`;
   if (cache.has(key)) return cache.get(key);
 
-  const url = await resolveImage(word);
+  const url = await resolveImage(word, category);
   cache.set(key, url);
   return url;
 }

@@ -15,10 +15,10 @@ export default function QuizCard({
   const loadImage = useCallback(async () => {
     setImageLoading(true);
     setImageError(false);
-    const url = await getImageForWord(puzzle.word, puzzle.image_url);
+    const url = await getImageForWord(puzzle.word, puzzle.image_url, puzzle.category);
     setImageUrl(url);
     setImageLoading(false);
-  }, [puzzle.word, puzzle.image_url]);
+  }, [puzzle.word, puzzle.image_url, puzzle.category]);
 
   useEffect(() => {
     loadImage();

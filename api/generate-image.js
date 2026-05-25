@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   }
 
   const word = (req.query.word || '').trim();
+  const category = (req.query.category || '').trim();
   if (!word) {
     return res.status(400).json({ error: 'Missing word parameter' });
   }
@@ -18,7 +19,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const prompt = `A bright, colorful, kid-friendly cartoon illustration of "${word}" for children learning English. Simple, cheerful, safe, centered subject, soft pastel background, no text, no letters.`;
+    const topic = category && category !== 'mixed' ? ` about ${category}` : '';
+    const prompt = `A bright, colorful, kid-friendly cartoon illustration of "${word}"${topic} for children learning English. Simple, cheerful, safe, centered subject, soft pastel background, no text, no letters.`;
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',

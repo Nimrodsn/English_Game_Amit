@@ -2,8 +2,9 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-async function generateOpenAIImage(word, apiKey) {
-  const prompt = `A bright, colorful, kid-friendly cartoon illustration of "${word}" for children learning English. Simple, cheerful, safe, centered subject, soft pastel background, no text, no letters.`;
+async function generateOpenAIImage(word, apiKey, category = '') {
+  const topic = category && category !== 'mixed' ? ` about ${category}` : '';
+  const prompt = `A bright, colorful, kid-friendly cartoon illustration of "${word}"${topic} for children learning English. Simple, cheerful, safe, centered subject, soft pastel background, no text, no letters.`;
 
   const response = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
@@ -27,44 +28,112 @@ async function generateOpenAIImage(word, apiKey) {
   return data.data?.[0]?.url ?? null;
 }
 
-function openaiImageDevPlugin(env) {
+async function generateOpenAIPuzzles(category, count, apiKey) {
+  const categoryHint =
+    category === 'mixed'
+      ? 'mixed everyday topics (animals, food, school, nature, transport)'
+      : `the "${category}" topic`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You create English vocabulary quiz puzzles for 9-year-old children. Hebrew translations, exactly 4 options per puzzle. Return valid JSON only.',
+        },
+        {
+          role: 'user',
+          content: `Create exactly ${count} puzzles for ${categoryHint}. Each: word, translation (Hebrew), options (4 English words), category. Return { "puzzles": [...] }`,
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) throw new Error(await response.text());
+  const data = await response.json();
+  const parsed = JSON.parse(data.choices?.[0]?.message?.content || '{}');
+  return (parsed.puzzles || []).map((p, i) => ({
+    $id: `ai-${category}-${Date.now()}-${i}`,
+    word: String(p.word).toLowerCase().trim(),
+    translation: String(p.translation || '').trim(),
+    options: p.options.map((o) => String(o).toLowerCase().trim()),
+    category: category === 'mixed' ? p.category || 'mixed' : category,
+    image_url: '',
+  }));
+}
+
+function openaiDevApiPlugin(env) {
   return {
-    name: 'openai-image-dev-api',
+    name: 'openai-dev-api',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (!req.url?.startsWith('/api/generate-image')) {
-          return next();
-        }
+        if (!req.url?.startsWith('/api/')) return next();
 
         const url = new URL(req.url, 'http://localhost');
-        const word = url.searchParams.get('word')?.trim();
-
-        if (!word) {
-          res.statusCode = 400;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'Missing word parameter' }));
-          return;
-        }
-
         const apiKey = env.OPENAI_API_KEY;
-        if (!apiKey) {
-          res.statusCode = 503;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'OpenAI API key not configured' }));
+
+        if (req.url.startsWith('/api/generate-image')) {
+          const word = url.searchParams.get('word')?.trim();
+          const category = url.searchParams.get('category') || '';
+          if (!word) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Missing word' }));
+            return;
+          }
+          if (!apiKey) {
+            res.statusCode = 503;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'OpenAI API key not configured' }));
+            return;
+          }
+          try {
+            const imageUrl = await generateOpenAIImage(word, apiKey, category);
+            res.statusCode = imageUrl ? 200 : 502;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(imageUrl ? { url: imageUrl } : { error: 'No image' }));
+          } catch (err) {
+            console.error('[openai-image]', err);
+            res.statusCode = 502;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Image generation failed' }));
+          }
           return;
         }
 
-        try {
-          const imageUrl = await generateOpenAIImage(word, apiKey);
-          res.statusCode = imageUrl ? 200 : 502;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify(imageUrl ? { url: imageUrl } : { error: 'No image returned' }));
-        } catch (err) {
-          console.error('[openai-image]', err);
-          res.statusCode = 502;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'Image generation failed' }));
+        if (req.url.startsWith('/api/generate-puzzles')) {
+          const category = url.searchParams.get('category') || 'animals';
+          const count = Math.min(12, parseInt(url.searchParams.get('count') || '8', 10));
+          if (!apiKey) {
+            res.statusCode = 503;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'OpenAI API key not configured' }));
+            return;
+          }
+          try {
+            const puzzles = await generateOpenAIPuzzles(category, count, apiKey);
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ puzzles }));
+          } catch (err) {
+            console.error('[openai-puzzles]', err);
+            res.statusCode = 502;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Puzzle generation failed' }));
+          }
+          return;
         }
+
+        return next();
       });
     },
   };
@@ -74,6 +143,6 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    plugins: [react(), tailwindcss(), openaiImageDevPlugin(env)],
+    plugins: [react(), tailwindcss(), openaiDevApiPlugin(env)],
   };
 });

@@ -17,8 +17,9 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="/game" element={<Navigate to="/" replace />} />
       <Route
-        path="/game"
+        path="/game/:levelId"
         element={
           <ProtectedRoute>
             <GamePage />
