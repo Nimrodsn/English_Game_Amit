@@ -41,7 +41,9 @@ Create a database and note the **Database ID**.
 | total_points   | integer | yes      | 0       |
 | avatar_url     | string  | no       | —       |
 
-**Collection permissions:** Read = Any. Create/Update/Delete = Users (document permissions set by the app on create).
+**Collection permissions:** Read = Any. **Create** = Users (required so signup can insert a profile). Update/Delete = Users (optional; document-level `write` is set by the app).
+
+On each new profile document the app sets: `read(any)` + `write(user:{id})`.
 
 #### `vocabulary_puzzles`
 

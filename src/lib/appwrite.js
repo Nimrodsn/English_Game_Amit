@@ -31,21 +31,18 @@ export function isAppwriteConfigured() {
   );
 }
 
+/** Appwrite Cloud allows read, update, delete, write — not legacy "create". */
 export function profilePermissions(userId) {
   return [
     Permission.read(Role.any()),
-    Permission.create(Role.user(userId)),
-    Permission.update(Role.user(userId)),
-    Permission.delete(Role.user(userId)),
+    Permission.write(Role.user(userId)),
   ];
 }
 
 export function progressPermissions(userId) {
   return [
     Permission.read(Role.user(userId)),
-    Permission.create(Role.user(userId)),
-    Permission.update(Role.user(userId)),
-    Permission.delete(Role.user(userId)),
+    Permission.write(Role.user(userId)),
   ];
 }
 
