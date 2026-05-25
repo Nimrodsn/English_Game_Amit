@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { debugLog } from '../lib/debugLog';
 import {
   account,
   databases,
@@ -34,6 +35,15 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const demoMode = !isAppwriteConfigured();
+  const pointsRef = useRef(0);
+  const profileDocRef = useRef(null);
+
+  useEffect(() => {
+    if (profile) {
+      pointsRef.current = profile.total_points ?? 0;
+      profileDocRef.current = profile;
+    }
+  }, [profile]);
 
   const fetchProfile = useCallback(async (userId) => {
     if (demoMode) {
@@ -148,23 +158,64 @@ export function AuthProvider({ children }) {
     setProfile(null);
   };
 
-  const updatePoints = async (newTotal) => {
-    if (!profile) return;
+  /** Add points atomically — safe when Appwrite updates lag behind fast answers (production). */
+  const addPoints = useCallback(async (delta) => {
+    const doc = profileDocRef.current;
+    if (!doc || delta === 0) return null;
+
+    const before = pointsRef.current;
+    const newTotal = before + delta;
+    pointsRef.current = newTotal;
+
+    // #region agent log
+    debugLog('AuthContext.jsx:addPoints', 'called', {
+      delta,
+      before,
+      newTotal,
+      demoMode,
+    }, 'A');
+    // #endregion
+
+    const optimistic = { ...doc, total_points: newTotal };
+    profileDocRef.current = optimistic;
+    setProfile(optimistic);
+
     if (demoMode) {
-      const updated = { ...profile, total_points: newTotal };
-      saveDemoProfile(updated);
-      setProfile(updated);
-      return updated;
+      saveDemoProfile(optimistic);
+      return optimistic;
     }
 
-    const updated = await databases.updateDocument(
-      APPWRITE_DB,
-      COLLECTIONS.profiles,
-      profile.$id,
-      { total_points: newTotal },
-    );
-    setProfile(updated);
-    return updated;
+    try {
+      const updated = await databases.updateDocument(
+        APPWRITE_DB,
+        COLLECTIONS.profiles,
+        doc.$id,
+        { total_points: newTotal },
+      );
+      const synced = updated.total_points ?? newTotal;
+      pointsRef.current = synced;
+      profileDocRef.current = updated;
+      setProfile(updated);
+      // #region agent log
+      debugLog('AuthContext.jsx:addPoints', 'appwrite ok', { synced }, 'A');
+      // #endregion
+      return updated;
+    } catch (err) {
+      pointsRef.current = before;
+      profileDocRef.current = doc;
+      setProfile(doc);
+      // #region agent log
+      debugLog('AuthContext.jsx:addPoints', 'appwrite failed', { message: err?.message }, 'C');
+      // #endregion
+      throw err;
+    }
+  }, [demoMode]);
+
+  const updatePoints = async (newTotal) => {
+    const doc = profileDocRef.current;
+    if (!doc) return null;
+    const delta = newTotal - pointsRef.current;
+    return addPoints(delta);
   };
 
   const value = useMemo(
@@ -180,9 +231,10 @@ export function AuthProvider({ children }) {
       signOut,
       refreshProfile,
       updatePoints,
+      addPoints,
       isAuthenticated: Boolean(user),
     }),
-    [user, profile, loading, error, demoMode, refreshProfile, updatePoints],
+    [user, profile, loading, error, demoMode, refreshProfile, updatePoints, addPoints],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
