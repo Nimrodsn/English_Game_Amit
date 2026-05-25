@@ -75,9 +75,10 @@ Appwrite Console import expects **CSV**, not JSON. Use [`scripts/puzzle-bank-imp
 
 1. Open your database → `vocabulary_puzzles` collection.
 2. Click **Import** (or bulk import / CSV).
-3. Upload `scripts/puzzle-bank-import.csv` (not `.json` or `.js`).
-4. Confirm the first row is the header: `word,translation,options,category,image_url`.
-5. Map columns to your attributes (`options` must be a **string array** in the collection).
+3. Upload `scripts/puzzle-bank-import.csv` (not `.json` or `.js`). Run `npm run export:csv` to regenerate.
+4. First row must be exactly: `word,translation,options,category,image_url` (no extra spaces, **no UTF-8 BOM** — do not re-save via Excel with BOM).
+5. If import still fails, open the CSV in Notepad and confirm line 1 starts with `word`, not `﻿word`.
+6. Map columns to your attributes (`options` must be a **string array** in the collection).
 
 If import still fails on `options`, add documents manually or use the seed script below.
 

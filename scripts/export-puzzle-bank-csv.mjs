@@ -34,6 +34,6 @@ const rows = PUZZLE_BANK.map((p) =>
   ].join(','),
 );
 
-const bom = '\uFEFF';
-writeFileSync(outPath, bom + [header, ...rows].join('\n') + '\n', 'utf8');
+// No UTF-8 BOM — Appwrite treats BOM as part of the first column name ("word" fails).
+writeFileSync(outPath, `${[header, ...rows].join('\n')}\n`, 'utf8');
 console.log(`Wrote ${PUZZLE_BANK.length} rows to ${outPath}`);
