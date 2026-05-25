@@ -1,4 +1,8 @@
-/** Full vocabulary bank — used for demo mode and Appwrite seeding. */
+/**
+ * Full vocabulary bank — used for demo mode and Appwrite seeding.
+ * CSV for Appwrite import: scripts/puzzle-bank-import.csv
+ * Regenerate CSV after edits: node scripts/export-puzzle-bank-csv.mjs
+ */
 export const PUZZLE_BANK = [
   { word: 'dog', translation: 'כלב', options: ['cat', 'dog', 'fish', 'bird'], category: 'animals' },
   { word: 'cat', translation: 'חתול', options: ['cat', 'cow', 'duck', 'frog'], category: 'animals' },

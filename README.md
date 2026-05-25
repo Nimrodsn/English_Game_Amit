@@ -69,13 +69,13 @@ On each new profile document the app sets: `read(any)` + `write(user:{id})`.
 
 ### 4. Seed puzzles
 
-Appwrite Console import expects **CSV**, not JSON. Use [`scripts/seed-puzzles-import.csv`](scripts/seed-puzzles-import.csv).
+Appwrite Console import expects **CSV**, not JSON. Use [`scripts/puzzle-bank-import.csv`](scripts/puzzle-bank-import.csv) (all 41 words from `puzzleBank.js`).
 
 **CSV import (Console):**
 
 1. Open your database → `vocabulary_puzzles` collection.
 2. Click **Import** (or bulk import / CSV).
-3. Upload `scripts/seed-puzzles-import.csv` (not the `.json` file).
+3. Upload `scripts/puzzle-bank-import.csv` (not `.json` or `.js`).
 4. Confirm the first row is the header: `word,translation,options,category,image_url`.
 5. Map columns to your attributes (`options` must be a **string array** in the collection).
 

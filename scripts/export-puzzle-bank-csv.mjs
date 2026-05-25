@@ -1,0 +1,39 @@
+/**
+ * Regenerate scripts/puzzle-bank-import.csv from src/data/puzzleBank.js
+ * Run: node scripts/export-puzzle-bank-csv.mjs
+ */
+import { writeFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { PUZZLE_BANK } from '../src/data/puzzleBank.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const outPath = resolve(__dirname, 'puzzle-bank-import.csv');
+
+function escapeCsv(value) {
+  const s = String(value ?? '');
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+function optionsToCsv(options) {
+  const json = JSON.stringify(options);
+  return `"${json.replace(/"/g, '""')}"`;
+}
+
+const header = 'word,translation,options,category,image_url';
+const rows = PUZZLE_BANK.map((p) =>
+  [
+    escapeCsv(p.word),
+    escapeCsv(p.translation),
+    optionsToCsv(p.options),
+    escapeCsv(p.category),
+    '',
+  ].join(','),
+);
+
+const bom = '\uFEFF';
+writeFileSync(outPath, bom + [header, ...rows].join('\n') + '\n', 'utf8');
+console.log(`Wrote ${PUZZLE_BANK.length} rows to ${outPath}`);
