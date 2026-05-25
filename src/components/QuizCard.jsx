@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { getImageForWord } from '../services/imageService';
+import { useCallback, useEffect, useState } from 'react';
+import { getFallbackImage, getImageForWord, genericPlaceholder } from '../services/imageService';
 
 export default function QuizCard({
   puzzle,
@@ -10,22 +10,31 @@ export default function QuizCard({
 }) {
   const [imageUrl, setImageUrl] = useState('');
   const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  const loadImage = useCallback(async () => {
+    setImageLoading(true);
+    setImageError(false);
+    const url = await getImageForWord(puzzle.word, puzzle.image_url);
+    setImageUrl(url);
+    setImageLoading(false);
+  }, [puzzle.word, puzzle.image_url]);
 
   useEffect(() => {
-    let cancelled = false;
+    loadImage();
+  }, [loadImage]);
+
+  const handleImageError = async () => {
+    if (imageError) {
+      setImageUrl(genericPlaceholder());
+      return;
+    }
+    setImageError(true);
     setImageLoading(true);
-
-    getImageForWord(puzzle.word, puzzle.image_url).then((url) => {
-      if (!cancelled) {
-        setImageUrl(url);
-        setImageLoading(false);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [puzzle.word, puzzle.image_url]);
+    const fallback = await getFallbackImage(puzzle.word);
+    setImageUrl(fallback);
+    setImageLoading(false);
+  };
 
   const getButtonClass = (option) => {
     const base =
@@ -51,15 +60,18 @@ export default function QuizCard({
     <div className="w-full overflow-hidden rounded-3xl bg-white/80 p-4 shadow-lg backdrop-blur">
       <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-2xl bg-purple-pastel/30">
         {imageLoading ? (
-          <div className="flex h-full items-center justify-center">
+          <div className="flex h-full flex-col items-center justify-center gap-2">
             <div className="h-10 w-10 animate-pulse rounded-full bg-purple-pastel" />
+            <span className="text-xs font-bold text-slate-500">Loading picture...</span>
           </div>
         ) : (
           <img
             src={imageUrl}
-            alt={puzzle.word}
+            alt={`Picture of ${puzzle.word}`}
             className="h-full w-full object-cover"
             loading="lazy"
+            referrerPolicy="no-referrer"
+            onError={handleImageError}
           />
         )}
       </div>

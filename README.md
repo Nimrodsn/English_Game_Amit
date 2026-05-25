@@ -114,7 +114,9 @@ Restart the dev server after changing `.env`.
 
 ## Image APIs
 
-**Priority order:** OpenAI (DALL·E 2) → Pexels → Unsplash → placeholder
+**Priority order:** OpenAI (DALL·E 2) → Pexels → Unsplash → Wikipedia → Pollinations (free)
+
+If you only see a **word** instead of a photo, the image URL failed and the old placeholder showed text. Ensure `OPENAI_API_KEY` is set on Vercel and redeploy after any `vercel.json` change (API routes must not be rewritten to `index.html`).
 
 ### OpenAI (recommended)
 
