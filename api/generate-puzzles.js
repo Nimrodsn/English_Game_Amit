@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   const categoryHint =
     category === 'mixed'
-      ? 'mixed everyday topics (animals, food, school, nature, transport)'
+      ? 'mixed everyday topics (animals, food, colors, body, furniture, clothes, school, nature, transport)'
       : `the "${category}" topic`;
 
   try {
@@ -46,7 +46,7 @@ Each puzzle object must have:
 - word (English, lowercase, single common noun)
 - translation (Hebrew)
 - options (array of 4 different English words, includes the correct word)
-- category (string: "${category === 'mixed' ? 'one of animals|food|school|nature|transport' : category}")
+- category (string: "${category === 'mixed' ? 'one of animals|food|colors|body|furniture|clothes|school|nature|transport' : category}")
 
 Return: { "puzzles": [ ... ] }`,
           },

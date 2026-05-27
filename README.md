@@ -152,13 +152,13 @@ If OpenAI fails or is unset, the app tries Pexels/Unsplash, then placeholders.
 
 ## Game rules
 
-- **6 levels** — Animals, Food, School, Nature, Transport, and Super Explorer (mixed).
+- **10 levels** — Animals, Food, Colors, Body, Furniture, Clothes, School, Nature, Transport, and Super Explorer (mixed).
 - Each round has **8 words** with pictures (OpenAI DALL·E when `OPENAI_API_KEY` is set).
 - Tap the **speaker** on any answer to hear the word spoken aloud.
 - **+10 points** per correct answer; **+25 bonus** when you finish a level (60%+ correct).
-- Unlock harder levels with total points (40 / 80 / 120 / 200).
+- Unlock harder levels with total points (30 / 60 / 90 … up to 260 for Super Explorer).
 - **OpenAI words:** if a level has few puzzles in Appwrite, the app auto-generates more via `/api/generate-puzzles`.
-- Built-in **42-word bank** in `src/data/puzzleBank.js` for offline/demo play.
+- Built-in **70+ word bank** in `src/data/puzzleBank.js` for offline/demo play (includes colors, body, furniture, clothes).
 - Leaderboard shows the top 10 explorers by points.
 
 ## Project structure

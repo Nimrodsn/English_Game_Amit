@@ -52,7 +52,7 @@ async function speakWordOpenAI(word, apiKey) {
 async function generateOpenAIPuzzles(category, count, apiKey) {
   const categoryHint =
     category === 'mixed'
-      ? 'mixed everyday topics (animals, food, school, nature, transport)'
+      ? 'mixed everyday topics (animals, food, colors, body, furniture, clothes, school, nature, transport)'
       : `the "${category}" topic`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
