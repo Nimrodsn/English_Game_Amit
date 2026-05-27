@@ -28,6 +28,27 @@ async function generateOpenAIImage(word, apiKey, category = '') {
   return data.data?.[0]?.url ?? null;
 }
 
+async function speakWordOpenAI(word, apiKey) {
+  const response = await fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'tts-1',
+      input: word,
+      voice: 'nova',
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
+  return Buffer.from(await response.arrayBuffer());
+}
+
 async function generateOpenAIPuzzles(category, count, apiKey) {
   const categoryHint =
     category === 'mixed'
@@ -106,6 +127,35 @@ function openaiDevApiPlugin(env) {
             res.statusCode = 502;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ error: 'Image generation failed' }));
+          }
+          return;
+        }
+
+        if (req.url.startsWith('/api/speak-word')) {
+          const word = url.searchParams.get('word')?.trim();
+          if (!word) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Missing word' }));
+            return;
+          }
+          if (!apiKey) {
+            res.statusCode = 503;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'OpenAI API key not configured' }));
+            return;
+          }
+          try {
+            const audio = await speakWordOpenAI(word, apiKey);
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'audio/mpeg');
+            res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate');
+            res.end(audio);
+          } catch (err) {
+            console.error('[openai-speak]', err);
+            res.statusCode = 502;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Speech generation failed' }));
           }
           return;
         }

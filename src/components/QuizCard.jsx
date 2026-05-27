@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getFallbackImage, getImageForWord, genericPlaceholder } from '../services/imageService';
+import OptionButton from './OptionButton';
 
 export default function QuizCard({
   puzzle,
@@ -36,26 +37,6 @@ export default function QuizCard({
     setImageLoading(false);
   };
 
-  const getButtonClass = (option) => {
-    const base =
-      'min-h-14 w-full rounded-2xl border-2 px-2 text-base font-extrabold capitalize transition active:scale-95 sm:text-lg';
-
-    if (!feedback) {
-      return `${base} border-purple-pastel bg-white/90 text-slate-800 shadow-sm hover:bg-peach-pastel/60 disabled:opacity-60`;
-    }
-
-    const isSelected = selectedWord === option;
-    const isCorrect = option.toLowerCase() === puzzle.word.toLowerCase();
-
-    if (isCorrect) {
-      return `${base} border-green-500 bg-green-400 text-white animate-pop scale-105`;
-    }
-    if (isSelected && !isCorrect) {
-      return `${base} border-red-500 bg-red-400 text-white animate-shake`;
-    }
-    return `${base} border-slate-200 bg-slate-100 text-slate-400 opacity-70`;
-  };
-
   return (
     <div className="w-full overflow-hidden rounded-3xl bg-white/80 p-4 shadow-lg backdrop-blur">
       <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-2xl bg-purple-pastel/30">
@@ -88,15 +69,15 @@ export default function QuizCard({
 
       <div className="grid grid-cols-2 gap-3">
         {(puzzle.options || []).map((option) => (
-          <button
+          <OptionButton
             key={option}
-            type="button"
-            disabled={disabled || Boolean(feedback)}
-            onClick={() => onSelect(option)}
-            className={getButtonClass(option)}
-          >
-            {option}
-          </button>
+            option={option}
+            correctWord={puzzle.word}
+            feedback={feedback}
+            selectedWord={selectedWord}
+            disabled={disabled}
+            onSelect={onSelect}
+          />
         ))}
       </div>
     </div>
