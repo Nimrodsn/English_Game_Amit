@@ -21,7 +21,7 @@ export default function Layout({ children, showNav = true }) {
       )}
 
       {profile && (
-        <div className="mb-4 flex items-center justify-between rounded-3xl bg-white/70 px-4 py-3 shadow-sm backdrop-blur">
+        <div className="mb-2 flex items-center justify-between rounded-2xl bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
           <span className="truncate text-sm font-bold text-purple-dark">
             Hi, {profile.username}!
           </span>
