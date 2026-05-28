@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { Sparkles, Mail, Lock, User } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function AuthPage() {
@@ -12,6 +12,7 @@ export default function AuthPage() {
   const [username, setUsername] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   if (!loading && isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -113,15 +114,30 @@ export default function AuthPage() {
           <span className="mb-1 flex items-center gap-1 text-xs font-bold text-slate-600">
             <Lock className="h-4 w-4" /> Password
           </span>
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-2xl border-2 border-purple-pastel bg-white px-4 py-3 text-base font-semibold outline-none focus:border-purple-dark"
-            placeholder="••••••••"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-2xl border-2 border-purple-pastel bg-white py-3 pl-4 pr-12 text-base font-semibold outline-none focus:border-purple-dark"
+              placeholder="••••••••"
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-2 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 transition hover:bg-purple-pastel/50 hover:text-purple-dark active:scale-95"
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </label>
 
         {localError && (
