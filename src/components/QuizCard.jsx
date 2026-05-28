@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Volume2 } from 'lucide-react';
 import { getFallbackImage, getImageForWord, genericPlaceholder } from '../services/imageService';
+import { speakText } from '../services/speechService';
 import OptionButton from './OptionButton';
 
 export default function QuizCard({
@@ -12,6 +14,7 @@ export default function QuizCard({
   const [imageUrl, setImageUrl] = useState('');
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [hintSpeaking, setHintSpeaking] = useState(false);
 
   const loadImage = useCallback(async () => {
     setImageLoading(true);
@@ -37,6 +40,16 @@ export default function QuizCard({
     setImageLoading(false);
   };
 
+  const handleSpeakHint = async () => {
+    if (!puzzle.translation || hintSpeaking) return;
+    setHintSpeaking(true);
+    try {
+      await speakText(puzzle.translation, 'he');
+    } finally {
+      setHintSpeaking(false);
+    }
+  };
+
   return (
     <div className="w-full overflow-hidden rounded-3xl bg-white/80 p-4 shadow-lg backdrop-blur">
       <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-2xl bg-purple-pastel/30">
@@ -58,9 +71,20 @@ export default function QuizCard({
       </div>
 
       {puzzle.translation && (
-        <p className="mb-3 text-center text-sm font-semibold text-slate-500" dir="auto">
-          Hint: {puzzle.translation}
-        </p>
+        <div className="mb-3 flex items-center justify-center gap-2">
+          <p className="text-center text-sm font-semibold text-slate-500" dir="auto">
+            Hint: {puzzle.translation}
+          </p>
+          <button
+            type="button"
+            onClick={handleSpeakHint}
+            disabled={hintSpeaking}
+            aria-label="Hear the hint in Hebrew"
+            className="flex min-h-9 min-w-9 items-center justify-center rounded-full bg-purple-pastel/80 text-purple-dark transition hover:bg-peach-pastel active:scale-95 disabled:opacity-50"
+          >
+            <Volume2 className={`h-4 w-4 ${hintSpeaking ? 'animate-pulse' : ''}`} />
+          </button>
+        </div>
       )}
 
       <p className="mb-4 text-center text-lg font-extrabold text-purple-dark">

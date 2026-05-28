@@ -1,5 +1,6 @@
 const cache = new Map();
 let currentAudio = null;
+const DEFAULT_LANG = 'en';
 
 export function stopSpeaking() {
   if (currentAudio) {
@@ -12,19 +13,20 @@ export function stopSpeaking() {
   }
 }
 
-export function speakWordFallback(word) {
+export function speakWordFallback(word, lang = DEFAULT_LANG) {
   stopSpeaking();
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
   const utterance = new SpeechSynthesisUtterance(word);
-  utterance.lang = 'en-US';
+  utterance.lang = lang === 'he' ? 'he-IL' : 'en-US';
   utterance.rate = 0.9;
   window.speechSynthesis.speak(utterance);
 }
 
-export async function speakWord(word) {
-  const key = word.toLowerCase().trim();
-  if (!key) return;
+export async function speakText(text, lang = DEFAULT_LANG) {
+  const normalized = String(text || '').trim();
+  if (!normalized) return;
+  const key = `${lang}:${normalized.toLowerCase()}`;
 
   stopSpeaking();
 
@@ -33,15 +35,19 @@ export async function speakWord(word) {
     try {
       await currentAudio.play();
     } catch {
-      speakWordFallback(key);
+      speakWordFallback(normalized, lang);
     }
     return;
   }
 
   try {
-    const res = await fetch(`/api/speak-word?word=${encodeURIComponent(key)}`);
+    const params = new URLSearchParams({
+      word: normalized,
+      lang,
+    });
+    const res = await fetch(`/api/speak-word?${params.toString()}`);
     if (!res.ok) {
-      speakWordFallback(key);
+      speakWordFallback(normalized, lang);
       return;
     }
 
@@ -51,6 +57,10 @@ export async function speakWord(word) {
     currentAudio = new Audio(url);
     await currentAudio.play();
   } catch {
-    speakWordFallback(key);
+    speakWordFallback(normalized, lang);
   }
+}
+
+export async function speakWord(word) {
+  return speakText(word, 'en');
 }

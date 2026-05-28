@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { debugLog } from '../lib/debugLog';
 import {
   account,
   databases,
@@ -167,15 +166,6 @@ export function AuthProvider({ children }) {
     const newTotal = before + delta;
     pointsRef.current = newTotal;
 
-    // #region agent log
-    debugLog('AuthContext.jsx:addPoints', 'called', {
-      delta,
-      before,
-      newTotal,
-      demoMode,
-    }, 'A');
-    // #endregion
-
     const optimistic = { ...doc, total_points: newTotal };
     profileDocRef.current = optimistic;
     setProfile(optimistic);
@@ -196,17 +186,11 @@ export function AuthProvider({ children }) {
       pointsRef.current = synced;
       profileDocRef.current = updated;
       setProfile(updated);
-      // #region agent log
-      debugLog('AuthContext.jsx:addPoints', 'appwrite ok', { synced }, 'A');
-      // #endregion
       return updated;
     } catch (err) {
       pointsRef.current = before;
       profileDocRef.current = doc;
       setProfile(doc);
-      // #region agent log
-      debugLog('AuthContext.jsx:addPoints', 'appwrite failed', { message: err?.message }, 'C');
-      // #endregion
       throw err;
     }
   }, [demoMode]);

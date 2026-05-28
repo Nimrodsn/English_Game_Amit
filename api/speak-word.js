@@ -1,6 +1,6 @@
 /**
  * Vercel serverless: OpenAI TTS for vocabulary pronunciation.
- * GET /api/speak-word?word=apple
+ * GET /api/speak-word?word=apple&lang=en
  */
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   }
 
   const word = (req.query.word || '').trim();
+  const lang = (req.query.lang || 'en').trim().toLowerCase();
   if (!word) {
     return res.status(400).json({ error: 'Missing word parameter' });
   }
@@ -28,6 +29,10 @@ export default async function handler(req, res) {
         model: 'tts-1',
         input: word,
         voice: 'nova',
+        instructions:
+          lang === 'he'
+            ? 'Speak clearly in Hebrew for children.'
+            : 'Speak clearly in English for children.',
       }),
     });
 

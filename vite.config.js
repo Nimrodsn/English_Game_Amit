@@ -28,7 +28,7 @@ async function generateOpenAIImage(word, apiKey, category = '') {
   return data.data?.[0]?.url ?? null;
 }
 
-async function speakWordOpenAI(word, apiKey) {
+async function speakWordOpenAI(word, apiKey, lang = 'en') {
   const response = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
     headers: {
@@ -39,6 +39,10 @@ async function speakWordOpenAI(word, apiKey) {
       model: 'tts-1',
       input: word,
       voice: 'nova',
+      instructions:
+        lang === 'he'
+          ? 'Speak clearly in Hebrew for children.'
+          : 'Speak clearly in English for children.',
     }),
   });
 
@@ -104,6 +108,7 @@ function openaiDevApiPlugin(env) {
 
         if (req.url.startsWith('/api/generate-image')) {
           const word = url.searchParams.get('word')?.trim();
+          const lang = (url.searchParams.get('lang') || 'en').trim().toLowerCase();
           const category = url.searchParams.get('category') || '';
           if (!word) {
             res.statusCode = 400;
@@ -146,7 +151,7 @@ function openaiDevApiPlugin(env) {
             return;
           }
           try {
-            const audio = await speakWordOpenAI(word, apiKey);
+            const audio = await speakWordOpenAI(word, apiKey, lang);
             res.statusCode = 200;
             res.setHeader('Content-Type', 'audio/mpeg');
             res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate');

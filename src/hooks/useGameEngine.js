@@ -7,19 +7,18 @@ import {
   progressPermissions,
 } from '../lib/appwrite';
 import { useAuth } from '../context/AuthContext';
-import { getLevelById, LEVEL_BONUS_POINTS, PUZZLES_PER_ROUND } from '../data/levels';
+import { getLevelById, LEVEL_BONUS_POINTS } from '../data/levels';
 import { loadLevelPuzzles } from '../services/puzzleService';
 import { preloadImage } from '../services/imageService';
 import { useLevelProgress } from './useLevelProgress';
-import { debugLog } from '../lib/debugLog';
 
 const POINTS_PER_CORRECT = 10;
 const FEEDBACK_DELAY_MS = 1200;
 
 export function useGameEngine(levelId) {
   const level = getLevelById(levelId);
-  const { user, profile, addPoints, demoMode } = useAuth();
-  const { markLevelComplete } = useLevelProgress(profile?.total_points ?? 0);
+  const { user, addPoints, demoMode } = useAuth();
+  const { markLevelComplete } = useLevelProgress();
 
   const [puzzles, setPuzzles] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -83,15 +82,8 @@ export function useGameEngine(levelId) {
     if (bonusAwarded) return;
     setBonusAwarded(true);
     markLevelComplete(level.id);
-    // #region agent log
-    debugLog('useGameEngine.js:awardLevelBonus', 'level bonus', {
-      bonus: LEVEL_BONUS_POINTS,
-      sessionCorrect,
-      totalPuzzles,
-    }, 'E');
-    // #endregion
     await addPoints(LEVEL_BONUS_POINTS);
-  }, [bonusAwarded, level.id, markLevelComplete, addPoints, sessionCorrect, totalPuzzles]);
+  }, [bonusAwarded, level.id, markLevelComplete, addPoints]);
 
   useEffect(() => {
     if (isComplete && sessionCorrect >= Math.ceil(totalPuzzles * 0.6)) {
@@ -104,40 +96,15 @@ export function useGameEngine(levelId) {
       if (!currentPuzzle || feedback) return;
 
       const isCorrect = word.toLowerCase() === currentPuzzle.word.toLowerCase();
-      // #region agent log
-      debugLog('useGameEngine.js:submitAnswer', 'answer checked', {
-        selectedWord: word,
-        correctWord: currentPuzzle.word,
-        isCorrect,
-        profilePointsBefore: profile?.total_points ?? 0,
-        currentIndex,
-        puzzleId: currentPuzzle.$id,
-      }, isCorrect ? 'A' : 'B');
-      // #endregion
       setSelectedWord(word);
       setFeedback(isCorrect ? 'correct' : 'wrong');
 
       if (isCorrect) {
-        setSessionCorrect((c) => {
-          const next = c + 1;
-          // #region agent log
-          debugLog('useGameEngine.js:sessionCorrect', 'session count', { prev: c, next }, 'D');
-          // #endregion
-          return next;
-        });
+        setSessionCorrect((c) => c + 1);
         setShowPointsPop(true);
         try {
-          const updated = await addPoints(POINTS_PER_CORRECT);
-          // #region agent log
-          debugLog('useGameEngine.js:addPoints', 'after correct', {
-            returnedTotal: updated?.total_points,
-            delta: POINTS_PER_CORRECT,
-          }, 'A');
-          // #endregion
+          await addPoints(POINTS_PER_CORRECT);
         } catch (err) {
-          // #region agent log
-          debugLog('useGameEngine.js:addPoints', 'points failed', { message: err?.message }, 'C');
-          // #endregion
           console.error('Points update failed:', err);
         }
       }
@@ -145,9 +112,6 @@ export function useGameEngine(levelId) {
       try {
         await recordProgress(currentPuzzle, isCorrect);
       } catch (err) {
-        // #region agent log
-        debugLog('useGameEngine.js:recordProgress', 'error', { message: err?.message }, 'C');
-        // #endregion
         console.error('Progress save failed:', err);
       }
 
@@ -161,7 +125,7 @@ export function useGameEngine(levelId) {
         if (nextPuzzle) preloadImage(nextPuzzle.word, nextPuzzle.image_url, nextPuzzle.category);
       }, FEEDBACK_DELAY_MS);
     },
-    [currentPuzzle, feedback, profile, addPoints, user, demoMode, currentIndex, puzzles],
+    [currentPuzzle, feedback, addPoints, user, demoMode, currentIndex, puzzles],
   );
 
   return {
