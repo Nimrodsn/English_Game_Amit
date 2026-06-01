@@ -21,7 +21,8 @@ export default function GamePage() {
     isComplete,
     sessionCorrect,
     showPointsPop,
-    bonusAwarded,
+    earnsPoints,
+    levelBonusEarned,
     levelBonus,
     submitAnswer,
     restartSession,
@@ -47,6 +48,12 @@ export default function GamePage() {
         <p className="mb-3 text-center text-xs font-semibold text-slate-500">
           Word {Math.min(currentIndex + 1, totalPuzzles || 1)} of {totalPuzzles || 8}
         </p>
+
+        {!earnsPoints && !loading && (
+          <p className="mb-2 rounded-xl bg-slate-100 px-3 py-1.5 text-center text-xs font-bold text-slate-600">
+            Practice mode — no extra stars this time.
+          </p>
+        )}
 
         <ProgressBar value={progressPercent} label="Level progress" />
 
@@ -78,7 +85,7 @@ export default function GamePage() {
               <p className="mt-2 font-semibold text-slate-600">
                 You got {sessionCorrect} out of {totalPuzzles} correct.
               </p>
-              {bonusAwarded && (
+              {levelBonusEarned && (
                 <p className="mt-2 font-extrabold text-lime-800">
                   +{levelBonus} bonus stars for finishing!
                 </p>

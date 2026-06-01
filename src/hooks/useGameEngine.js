@@ -18,7 +18,8 @@ const FEEDBACK_DELAY_MS = 1200;
 export function useGameEngine(levelId) {
   const level = getLevelById(levelId);
   const { user, addPoints, demoMode } = useAuth();
-  const { markLevelComplete } = useLevelProgress();
+  const { markLevelComplete, completedIds } = useLevelProgress();
+  const earnsPoints = !completedIds.includes(level.id);
 
   const [puzzles, setPuzzles] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,6 +30,7 @@ export function useGameEngine(levelId) {
   const [showPointsPop, setShowPointsPop] = useState(false);
   const [sessionCorrect, setSessionCorrect] = useState(0);
   const [bonusAwarded, setBonusAwarded] = useState(false);
+  const [levelBonusEarned, setLevelBonusEarned] = useState(false);
 
   const loadRound = useCallback(async () => {
     setLoading(true);
@@ -38,6 +40,7 @@ export function useGameEngine(levelId) {
     setSelectedWord(null);
     setSessionCorrect(0);
     setBonusAwarded(false);
+    setLevelBonusEarned(false);
 
     try {
       const round = await loadLevelPuzzles(level, { demoMode, useAI: true });
@@ -81,9 +84,16 @@ export function useGameEngine(levelId) {
   const awardLevelBonus = useCallback(async () => {
     if (bonusAwarded) return;
     setBonusAwarded(true);
+    if (completedIds.includes(level.id)) return;
+
     markLevelComplete(level.id);
-    await addPoints(LEVEL_BONUS_POINTS);
-  }, [bonusAwarded, level.id, markLevelComplete, addPoints]);
+    try {
+      await addPoints(LEVEL_BONUS_POINTS);
+      setLevelBonusEarned(true);
+    } catch (err) {
+      console.error('Level bonus failed:', err);
+    }
+  }, [bonusAwarded, level.id, completedIds, markLevelComplete, addPoints]);
 
   useEffect(() => {
     if (isComplete && sessionCorrect >= Math.ceil(totalPuzzles * 0.6)) {
@@ -101,11 +111,13 @@ export function useGameEngine(levelId) {
 
       if (isCorrect) {
         setSessionCorrect((c) => c + 1);
-        setShowPointsPop(true);
-        try {
-          await addPoints(POINTS_PER_CORRECT);
-        } catch (err) {
-          console.error('Points update failed:', err);
+        if (earnsPoints) {
+          setShowPointsPop(true);
+          try {
+            await addPoints(POINTS_PER_CORRECT);
+          } catch (err) {
+            console.error('Points update failed:', err);
+          }
         }
       }
 
@@ -125,7 +137,7 @@ export function useGameEngine(levelId) {
         if (nextPuzzle) preloadImage(nextPuzzle.word, nextPuzzle.image_url, nextPuzzle.category);
       }, FEEDBACK_DELAY_MS);
     },
-    [currentPuzzle, feedback, addPoints, user, demoMode, currentIndex, puzzles],
+    [currentPuzzle, feedback, addPoints, earnsPoints, currentIndex, puzzles],
   );
 
   return {
@@ -142,7 +154,8 @@ export function useGameEngine(levelId) {
     isComplete,
     sessionCorrect,
     showPointsPop,
-    bonusAwarded,
+    earnsPoints,
+    levelBonusEarned,
     levelBonus: LEVEL_BONUS_POINTS,
     submitAnswer,
     restartSession: loadRound,

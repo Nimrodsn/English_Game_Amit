@@ -40,7 +40,7 @@ export default function HomePage() {
           <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-[11px] font-semibold text-slate-600">
             <li>Choose a level (8 words per round).</li>
             <li>Match the picture to the English word.</li>
-            <li>+10 per correct answer, +25 level bonus.</li>
+            <li>+10 per correct and +25 bonus the first time you finish each level.</li>
             <li>Unlock levels with more stars.</li>
           </ol>
         </details>
