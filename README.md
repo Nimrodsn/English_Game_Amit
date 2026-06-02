@@ -69,7 +69,7 @@ On each new profile document the app sets: `read(any)` + `write(user:{id})`.
 
 ### 4. Seed puzzles
 
-Appwrite Console import expects **CSV**, not JSON. Use [`scripts/puzzle-bank-import.csv`](scripts/puzzle-bank-import.csv) (all 41 words from `puzzleBank.js`).
+Appwrite Console import expects **CSV**, not JSON. Use [`scripts/puzzle-bank-import.csv`](scripts/puzzle-bank-import.csv) (270+ words from `puzzleBank.js`, at least 30 per level category).
 
 **CSV import (Console):**
 
@@ -94,7 +94,7 @@ If import still fails on `options`, add documents manually or use the seed scrip
    node scripts/seed-appwrite.mjs
    ```
 
-Source data remains in [`scripts/seed-puzzles.json`](scripts/seed-puzzles.json) for the script.
+Source data lives in [`src/data/puzzleBank.js`](src/data/puzzleBank.js), which is assembled from [`src/data/vocabulary/categories.js`](src/data/vocabulary/categories.js).
 
 ### 5. Environment variables
 
@@ -158,7 +158,7 @@ If OpenAI fails or is unset, the app tries Pexels/Unsplash, then placeholders.
 - **+10 points** per correct answer; **+25 bonus** when you finish a level (60%+ correct).
 - Unlock harder levels with total points (30 / 60 / 90 … up to 260 for Super Explorer).
 - **OpenAI words:** if a level has few puzzles in Appwrite, the app auto-generates more via `/api/generate-puzzles`.
-- Built-in **70+ word bank** in `src/data/puzzleBank.js` for offline/demo play (includes colors, body, furniture, clothes).
+- Built-in **270+ word bank** (30+ per playable category) in `src/data/puzzleBank.js` for offline/demo play.
 - Leaderboard shows the top 10 explorers by points.
 
 ## Project structure
