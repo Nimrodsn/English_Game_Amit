@@ -113,6 +113,21 @@ VITE_UNSPLASH_ACCESS_KEY=optional
 
 Restart the dev server after changing `.env`.
 
+### Admin leaderboard editing
+
+To let a trusted account edit any player's score on the leaderboard, set:
+
+```env
+ADMIN_EMAILS=nimrodsnapir@gmail.com
+VITE_ADMIN_EMAILS=nimrodsnapir@gmail.com
+```
+
+- `ADMIN_EMAILS` — checked on the server (`/api/admin-update-score`); required on Vercel.
+- `VITE_ADMIN_EMAILS` — shows edit controls in the UI for matching signed-in emails.
+- `APPWRITE_API_KEY` must have **databases.write** so the API can update any profile.
+
+Sign in with the admin email, open **Leaderboard**, and use the pencil icon next to a score.
+
 ## Image APIs
 
 **Priority order:** OpenAI (DALL·E 2) → Pexels → Unsplash → Wikipedia → Pollinations (free)
@@ -159,7 +174,7 @@ If OpenAI fails or is unset, the app tries Pexels/Unsplash, then placeholders.
 - Unlock harder levels with total points (30 / 60 / 90 … up to 260 for Super Explorer).
 - **OpenAI words:** if a level has few puzzles in Appwrite, the app auto-generates more via `/api/generate-puzzles`.
 - Built-in **270+ word bank** (30+ per playable category) in `src/data/puzzleBank.js` for offline/demo play.
-- Leaderboard shows the top 10 explorers by points.
+- Leaderboard shows the top 10 explorers by points (admins can edit scores when `ADMIN_EMAILS` is set).
 
 ## Project structure
 

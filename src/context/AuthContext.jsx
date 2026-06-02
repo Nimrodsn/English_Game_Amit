@@ -9,6 +9,7 @@ import {
   isAppwriteConfigured,
   profilePermissions,
 } from '../lib/appwrite';
+import { getClientAdminAllowlist, isAdminEmail } from '../lib/admin';
 
 const AuthContext = createContext(null);
 
@@ -202,6 +203,11 @@ export function AuthProvider({ children }) {
     return addPoints(delta);
   };
 
+  const isAdmin = useMemo(() => {
+    if (!user?.email) return false;
+    return isAdminEmail(user.email, getClientAdminAllowlist());
+  }, [user?.email]);
+
   const value = useMemo(
     () => ({
       user,
@@ -210,6 +216,7 @@ export function AuthProvider({ children }) {
       error,
       setError,
       demoMode,
+      isAdmin,
       signUp,
       signIn,
       signOut,
@@ -218,7 +225,7 @@ export function AuthProvider({ children }) {
       addPoints,
       isAuthenticated: Boolean(user),
     }),
-    [user, profile, loading, error, demoMode, refreshProfile, updatePoints, addPoints],
+    [user, profile, loading, error, demoMode, isAdmin, refreshProfile, updatePoints, addPoints],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
