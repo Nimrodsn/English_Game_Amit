@@ -69,7 +69,7 @@ On each new profile document the app sets: `read(any)` + `write(user:{id})`.
 
 ### 4. Seed puzzles
 
-Appwrite Console import expects **CSV**, not JSON. Use [`scripts/puzzle-bank-import.csv`](scripts/puzzle-bank-import.csv) (270+ words from `puzzleBank.js`, at least 30 per level category).
+Appwrite Console import expects **CSV**, not JSON. Use [`scripts/puzzle-bank-import.csv`](scripts/puzzle-bank-import.csv) (~480 words from `puzzleBank.js`, 30 per category). Run `npm run export:csv` after vocabulary changes.
 
 **CSV import (Console):**
 
@@ -167,13 +167,13 @@ If OpenAI fails or is unset, the app tries Pexels/Unsplash, then placeholders.
 
 ## Game rules
 
-- **10 levels** — Animals, Food, Colors, Body, Furniture, Clothes, School, Nature, Transport, and Super Explorer (mixed).
-- Each round has **8 words** with pictures (OpenAI DALL·E when `OPENAI_API_KEY` is set).
+- **16 levels** in four difficulties — Easy (6 words), Medium (8), Hard/Expert (10). Topics include Animals, Food, Family, Weather, Sports, Places, Feelings, Numbers, and more.
+- Each round uses pictures (OpenAI DALL·E when `OPENAI_API_KEY` is set).
 - Tap the **speaker** on any answer to hear the word spoken aloud.
-- **+10 points** per correct answer; **+25 bonus** when you finish a level (60%+ correct).
-- Unlock harder levels with total points (30 / 60 / 90 … up to 260 for Super Explorer).
+- **+10 points** per correct answer; **bonus stars** on first pass (20–35 by difficulty; Easy 50%+, Expert 80%+).
+- Unlock harder levels with total points (up to 220 for Super Explorer).
 - **OpenAI words:** if a level has few puzzles in Appwrite, the app auto-generates more via `/api/generate-puzzles`.
-- Built-in **270+ word bank** (30+ per playable category) in `src/data/puzzleBank.js` for offline/demo play.
+- Built-in **480+ word bank** (15 categories × 30 words) in `src/data/puzzleBank.js` for offline/demo play.
 - Leaderboard shows the top 10 explorers by points (admins can edit scores when `ADMIN_EMAILS` is set).
 
 ## Project structure

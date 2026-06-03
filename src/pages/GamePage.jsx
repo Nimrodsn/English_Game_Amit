@@ -4,11 +4,12 @@ import Layout from '../components/Layout';
 import ProgressBar from '../components/ProgressBar';
 import QuizCard from '../components/QuizCard';
 import { useGameEngine } from '../hooks/useGameEngine';
-import { getLevelById } from '../data/levels';
+import { getLevelById, getLevelDifficulty } from '../data/levels';
 
 export default function GamePage() {
   const { levelId } = useParams();
   const level = getLevelById(levelId);
+  const tier = getLevelDifficulty(level);
   const {
     currentPuzzle,
     currentIndex,
@@ -24,9 +25,12 @@ export default function GamePage() {
     earnsPoints,
     levelBonusEarned,
     levelBonus,
+    passRequired,
     submitAnswer,
     restartSession,
   } = useGameEngine(levelId);
+
+  const expectedWords = totalPuzzles || tier.puzzlesPerRound;
 
   return (
     <Layout>
@@ -45,8 +49,12 @@ export default function GamePage() {
         <h1 className="mb-1 text-center text-xl font-extrabold text-purple-dark">
           {level.title}
         </h1>
-        <p className="mb-3 text-center text-xs font-semibold text-slate-500">
-          Word {Math.min(currentIndex + 1, totalPuzzles || 1)} of {totalPuzzles || 8}
+        <p className="mb-1 text-center text-xs font-semibold text-slate-500">
+          Word {Math.min(currentIndex + 1, expectedWords)} of {expectedWords}
+        </p>
+        <p className="mb-3 text-center text-[11px] font-bold text-purple-dark/80">
+          {tier.label} · need{' '}
+          {passRequired || Math.ceil(tier.puzzlesPerRound * tier.passRatio)}+ correct for bonus
         </p>
 
         {!earnsPoints && !loading && (

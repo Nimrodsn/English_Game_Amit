@@ -6,7 +6,7 @@ import {
   isAppwriteConfigured,
 } from '../lib/appwrite';
 import { PUZZLE_BANK, bankToPuzzleDoc } from '../data/puzzleBank';
-import { PUZZLES_PER_ROUND } from '../data/levels';
+import { getLevelDifficulty } from '../data/levels';
 import { DEMO_PUZZLES } from '../data/demoPuzzles';
 import { buildOptions } from '../utils/puzzleOptions';
 
@@ -59,7 +59,11 @@ function dedupePuzzles(puzzles) {
   });
 }
 
-function pickRound(puzzles, levelCategory, count = PUZZLES_PER_ROUND) {
+function puzzlesNeeded(level) {
+  return getLevelDifficulty(level).puzzlesPerRound;
+}
+
+function pickRound(puzzles, levelCategory, count) {
   const maxCount = Math.min(count, puzzles.length);
   if (maxCount === 0) return [];
 
@@ -130,7 +134,7 @@ async function fetchFromAppwrite(level) {
   return res.documents;
 }
 
-async function fetchAIPuzzles(level, count = PUZZLES_PER_ROUND) {
+async function fetchAIPuzzles(level, count) {
   try {
     const res = await fetch(
       `/api/generate-puzzles?category=${encodeURIComponent(level.category)}&count=${count + 2}`,
@@ -147,29 +151,31 @@ async function fetchAIPuzzles(level, count = PUZZLES_PER_ROUND) {
  * Load a full round of puzzles for a level (DB + bank + optional OpenAI top-up).
  */
 export async function loadLevelPuzzles(level, { demoMode, useAI = true } = {}) {
+  const needed = puzzlesNeeded(level);
+
   if (demoMode || !isAppwriteConfigured()) {
     let pool = filterByLevel(DEMO_PUZZLES, level);
-    if (pool.length < PUZZLES_PER_ROUND && useAI) {
-      const ai = await fetchAIPuzzles(level);
+    if (pool.length < needed && useAI) {
+      const ai = await fetchAIPuzzles(level, needed);
       pool = [...pool, ...filterByLevel(ai, level)];
     }
-    if (pool.length < PUZZLES_PER_ROUND) {
+    if (pool.length < needed) {
       pool = [...pool, ...fromBank(level)];
     }
     pool = dedupePuzzles(pool);
-    const round = pickRound(pool, level.category);
+    const round = pickRound(pool, level.category, needed);
     return addRoundOptions(round, pool);
   }
 
   try {
     let pool = await fetchFromAppwrite(level);
 
-    if (pool.length < PUZZLES_PER_ROUND) {
+    if (pool.length < needed) {
       pool = [...pool, ...fromBank(level)];
     }
 
-    if (pool.length < PUZZLES_PER_ROUND && useAI) {
-      const ai = await fetchAIPuzzles(level);
+    if (pool.length < needed && useAI) {
+      const ai = await fetchAIPuzzles(level, needed);
       pool = [...pool, ...filterByLevel(ai, level)];
     }
 
@@ -179,11 +185,11 @@ export async function loadLevelPuzzles(level, { demoMode, useAI = true } = {}) {
       pool = fromBank(level);
     }
 
-    const round = pickRound(pool, level.category);
+    const round = pickRound(pool, level.category, needed);
     return addRoundOptions(round, pool);
   } catch {
     const pool = dedupePuzzles(fromBank(level));
-    const round = pickRound(pool, level.category);
+    const round = pickRound(pool, level.category, needed);
     return addRoundOptions(round, pool);
   }
 }

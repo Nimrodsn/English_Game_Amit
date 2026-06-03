@@ -7,7 +7,7 @@ import {
   progressPermissions,
 } from '../lib/appwrite';
 import { useAuth } from '../context/AuthContext';
-import { getLevelById, LEVEL_BONUS_POINTS } from '../data/levels';
+import { getLevelById, getLevelDifficulty } from '../data/levels';
 import { loadLevelPuzzles } from '../services/puzzleService';
 import { preloadImage } from '../services/imageService';
 import { useLevelProgress } from './useLevelProgress';
@@ -17,6 +17,7 @@ const FEEDBACK_DELAY_MS = 1200;
 
 export function useGameEngine(levelId) {
   const level = getLevelById(levelId);
+  const difficulty = getLevelDifficulty(level);
   const { user, addPoints, demoMode } = useAuth();
   const { markLevelComplete, completedIds } = useLevelProgress();
   const earnsPoints = !completedIds.includes(level.id);
@@ -88,18 +89,20 @@ export function useGameEngine(levelId) {
 
     markLevelComplete(level.id);
     try {
-      await addPoints(LEVEL_BONUS_POINTS);
+      await addPoints(difficulty.bonusPoints);
       setLevelBonusEarned(true);
     } catch (err) {
       console.error('Level bonus failed:', err);
     }
-  }, [bonusAwarded, level.id, completedIds, markLevelComplete, addPoints]);
+  }, [bonusAwarded, level.id, completedIds, markLevelComplete, addPoints, difficulty.bonusPoints]);
+
+  const passRequired = Math.ceil(totalPuzzles * difficulty.passRatio);
 
   useEffect(() => {
-    if (isComplete && sessionCorrect >= Math.ceil(totalPuzzles * 0.6)) {
+    if (isComplete && sessionCorrect >= passRequired) {
       awardLevelBonus();
     }
-  }, [isComplete, sessionCorrect, totalPuzzles, awardLevelBonus]);
+  }, [isComplete, sessionCorrect, passRequired, awardLevelBonus]);
 
   const submitAnswer = useCallback(
     async (word) => {
@@ -156,7 +159,9 @@ export function useGameEngine(levelId) {
     showPointsPop,
     earnsPoints,
     levelBonusEarned,
-    levelBonus: LEVEL_BONUS_POINTS,
+    difficulty,
+    passRequired,
+    levelBonus: difficulty.bonusPoints,
     submitAnswer,
     restartSession: loadRound,
     loadRound,

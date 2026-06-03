@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   }
 
   const category = (req.query.category || 'animals').trim();
-  const count = Math.min(12, Math.max(4, parseInt(req.query.count, 10) || 8));
+  const count = Math.min(14, Math.max(4, parseInt(req.query.count, 10) || 8));
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   const categoryHint =
     category === 'mixed'
-      ? 'mixed everyday topics (animals, food, colors, body, furniture, clothes, school, nature, transport)'
+      ? 'mixed everyday topics (animals, food, colors, body, furniture, clothes, school, nature, transport, family, weather, sports, places, feelings, numbers)'
       : `the "${category}" topic`;
 
   try {

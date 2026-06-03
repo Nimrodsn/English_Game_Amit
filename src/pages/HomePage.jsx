@@ -38,10 +38,10 @@ export default function HomePage() {
             How to play
           </summary>
           <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-[11px] font-semibold text-slate-600">
-            <li>Choose a level (8 words per round).</li>
-            <li>Match the picture to the English word.</li>
-            <li>+10 per correct and +25 bonus the first time you finish each level.</li>
-            <li>Unlock levels with more stars.</li>
+            <li>16 levels in Easy, Medium, Hard, and Expert.</li>
+            <li>Easy = 6 words; Medium = 8; Hard/Expert = 10 per round.</li>
+            <li>+10 per correct; bonus stars the first time you pass (varies by difficulty).</li>
+            <li>Unlock harder levels with more stars.</li>
           </ol>
         </details>
       </div>

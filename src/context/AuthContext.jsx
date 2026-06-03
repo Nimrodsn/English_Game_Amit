@@ -9,7 +9,13 @@ import {
   isAppwriteConfigured,
   profilePermissions,
 } from '../lib/appwrite';
-import { getClientAdminAllowlist, isAdminEmail } from '../lib/admin';
+import {
+  clearAuthEmail,
+  getAuthEmail,
+  getClientAdminAllowlist,
+  isAdminEmail,
+  storeAuthEmail,
+} from '../lib/admin';
 
 const AuthContext = createContext(null);
 
@@ -77,13 +83,19 @@ export function AuthProvider({ children }) {
         if (demoMode) {
           const demoUserId = localStorage.getItem(DEMO_USER_KEY);
           if (demoUserId) {
-            const demoUser = { $id: demoUserId, name: loadDemoProfile()?.username || 'Explorer' };
+            const demoUser = {
+              $id: demoUserId,
+              name: loadDemoProfile()?.username || 'Explorer',
+              email: getAuthEmail(null),
+            };
             setUser(demoUser);
             await fetchProfile(demoUserId);
           }
         } else {
           const session = await account.get();
-          setUser(session);
+          const authEmail = session?.email || getAuthEmail(null);
+          if (authEmail) storeAuthEmail(authEmail);
+          setUser({ ...session, email: authEmail || session?.email });
           await fetchProfile(session.$id);
         }
       } catch {
@@ -108,6 +120,7 @@ export function AuthProvider({ children }) {
       };
       localStorage.setItem(DEMO_USER_KEY, userId);
       saveDemoProfile(newProfile);
+      storeAuthEmail(email);
       setUser({ $id: userId, name: username, email });
       setProfile(newProfile);
       return;
@@ -123,7 +136,8 @@ export function AuthProvider({ children }) {
       avatar_url: `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${encodeURIComponent(username)}`,
     }, profilePermissions(newUser.$id));
 
-    setUser(newUser);
+    storeAuthEmail(email);
+    setUser({ ...newUser, email: newUser.email || email });
     await fetchProfile(newUser.$id);
   };
 
@@ -135,6 +149,7 @@ export function AuthProvider({ children }) {
         throw new Error('No demo account yet. Please sign up first!');
       }
       localStorage.setItem(DEMO_USER_KEY, existing.user_id);
+      storeAuthEmail(email);
       setUser({ $id: existing.user_id, name: existing.username, email });
       setProfile(existing);
       return;
@@ -142,18 +157,22 @@ export function AuthProvider({ children }) {
 
     await account.createEmailPasswordSession(email, password);
     const session = await account.get();
-    setUser(session);
+    const authEmail = session?.email || email;
+    storeAuthEmail(authEmail);
+    setUser({ ...session, email: authEmail });
     await fetchProfile(session.$id);
   };
 
   const signOut = async () => {
     if (demoMode) {
       localStorage.removeItem(DEMO_USER_KEY);
+      clearAuthEmail();
       setUser(null);
       setProfile(null);
       return;
     }
     await account.deleteSession('current');
+    clearAuthEmail();
     setUser(null);
     setProfile(null);
   };
@@ -204,9 +223,9 @@ export function AuthProvider({ children }) {
   };
 
   const isAdmin = useMemo(() => {
-    if (!user?.email) return false;
-    return isAdminEmail(user.email, getClientAdminAllowlist());
-  }, [user?.email]);
+    const authEmail = getAuthEmail(user);
+    return isAdminEmail(authEmail, getClientAdminAllowlist());
+  }, [user, demoMode]);
 
   const value = useMemo(
     () => ({
